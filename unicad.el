@@ -4,7 +4,7 @@
 ;; Copyright (C) 2006, 2007, 2008, 2010 Qichen Huang
 ;; $Id$
 ;; Author: Qichen Huang <unicad.el@gmail.com>
-;; Melpa maintainer: chendianbuji <chendianbuji@gmail.com>
+;; MELPA maintainer: chendianbuji <chendianbuji@gmail.com>
 ;; Package-Requires: ((emacs "24"))
 ;; Time-stamp: <2010-04-21 15:07:12>
 ;; Version: 1.1.7
