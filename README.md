@@ -56,4 +56,4 @@ M-x `unicad-mode`
 GPLv3
 
 ## Credits
-`unicad` is written by [**Qichen Huang**](unicad.el@gmail.com). And [室见](https://github.com/ukari) is the MELPA maintainer of `unicad` .
+`unicad` is written by [Qichen Huang](unicad.el@gmail.com). And [室见](https://github.com/ukari) is the MELPA maintainer of `unicad` .
