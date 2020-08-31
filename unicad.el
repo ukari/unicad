@@ -1,9 +1,10 @@
-;;; unicad.el --- An elisp port of Mozilla Universal Charset Auto Detector
+;;; unicad.el --- An elisp port of Mozilla Universal Charset Auto Detector -*- lexical-binding: t; -*-
 
 ;;;{{{  Copyright and License
 ;; Copyright (C) 2006, 2007, 2008, 2010 Qichen Huang
 ;; $Id$
 ;; Author: Qichen Huang <unicad.el@gmail.com>
+;; Package-Requires: ((emacs "24"))
 ;; Time-stamp: <2010-04-21 15:07:12>
 ;; Version: 1.1.7
 ;; Keywords: i18n
@@ -133,9 +134,6 @@
 
 ;;{{{  define variable
 
-;;(provide 'unicad)
-(require 'cl)
-
 (defgroup unicad nil "An elisp port of Mozilla Universal Charset Auto Detector" :group 'I18n)
 
 ;;;###autoload
@@ -216,7 +214,7 @@ If optional argument HERE is non-nil, insert string at point."
   (interactive "P")
   (if here
       (insert unicad-version)
-    (if (interactive-p)
+    (if (called-interactively-p 'any)
         (message "%s" unicad-version)
       unicad-version)))
 
@@ -259,7 +257,7 @@ If optional argument HERE is non-nil, insert string at point."
                   (eq unicad-global-enable t))
               (not (local-variable-p 'buffer-file-coding-system))
               (not (buffer-modified-p)))
-    (let ((buf (current-buffer)))
+    (let ((_buf (current-buffer)))
 ;;       (make-local-variable 'unicad-best-guess)
 ;;       (make-local-variable 'unicad-singlebyte-best-guess)
 ;;       (make-local-variable 'unicad-singlebyte-group-guess)
@@ -274,7 +272,7 @@ If optional argument HERE is non-nil, insert string at point."
               (input-state 'ePureAscii)
               (code0 0)
               prober-result
-              code1 code2 state
+              code1 _code2 state
               start quick-start quick-end)
           (setq unicad-eol nil)
           (unless (setq prober-result (unicad-bom-detect))
@@ -1465,7 +1463,7 @@ See `unicad-singlebyte-group-list'."
   (let ((lists unicad-singlebyte-group-list)
         (mState 'eDetecting)
         (bestConf 0.0)
-        state prober mBestGuess cf)
+        state _prober mBestGuess cf)
     (setq unicad-singlebyte-best-guess '(nil 0.0)
           unicad-singlebyte-group-guess nil)
     (while (and lists (eq mState 'eDetecting))
@@ -3148,11 +3146,11 @@ Use chars between START and END."
   "Increase freq chars of DIST-TABLE by 1."
   (setcdr dist-table (1+ (cdr dist-table))))
 
-(defun unicad-dist-table-get-confidence (dist-table dist-ratio size &optional prefer)
+(defun unicad-dist-table-get-confidence (dist-table dist-ratio size &optional _prefer)
   "Get DIST-TABLE confidence.
 Argument DIST-RATIO.
 Argument SIZE.
-Argument PREFER is match preference encoding system."
+Argument _PREFER is match preference encoding system."
   (let ((Confidence 0.0)
         (total-chars (unicad-dist-table-total-chars dist-table))
         (freq-chars (unicad-dist-table-freq-chars dist-table)))
@@ -3166,7 +3164,8 @@ Argument PREFER is match preference encoding system."
      ((/= total-chars freq-chars)
       (setq Confidence (min (/ freq-chars (* (- total-chars freq-chars) dist-ratio))
                             unicad--sure-yes)))
-     (t (setq Confidence unicad--sure-yes)))))
+     (t (setq Confidence unicad--sure-yes)))
+    Confidence))
 
 ;;}}}
 
@@ -4776,7 +4775,7 @@ Argument MFREQCOUNTER."
 Use chars between START and END."
   (let ((lists unicad-esc-group-list)
         (mState 'eDetecting)
-        (mBestGuess nil)
+        ;;(mBestGuess nil)
         (bestConf 0.0)
         state)
     (setq unicad-esc-group-guess nil)
@@ -4786,8 +4785,9 @@ Use chars between START and END."
       (cond
        ((eq state 'eItsMe)
         (setq mState 'eFoundIt)
-        (setq mBestGuess (car (nth 0 unicad-esc-group-guess)))
-        (setq bestConf   (cdr (nth 0 unicad-esc-group-guess))))
+        ;;(setq mBestGuess (car (nth 0 unicad-esc-group-guess)))
+        (setq bestConf   (cdr (nth 0 unicad-esc-group-guess)))
+        bestConf)
        ((eq state 'eNotMe) nil)))))
 
 (defvar unicad-hz-name 'hz-gb-2312)
