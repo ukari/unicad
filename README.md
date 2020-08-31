@@ -1,37 +1,59 @@
-# speedbar-git-respect
-[![MELPA](https://melpa.org/packages/speedbar-git-respect-badge.svg)](https://melpa.org/#/speedbar-git-respect)
+# unicad
+[![MELPA](https://melpa.org/packages/unicad-badge.svg)](https://melpa.org/#/unicad)
 
-Particular respect git repo in speedbar
+An elisp port of Mozilla Universal Charset Auto Detector
 
 ## About
-This package will override the Emacs builtin `speedbar-file-lists` function and change its behaviour when the directory is a git repo.
+unicad.el is an Elisp program port from Mozilla universal charset auto detector. After loading unicad in GNU Emacs, it can automatically detect multiple charsets, and you will never encounter garbled files in the future.
 
-The file list will show the following stuffs:
-1. All directorys and files tracked by git
-2. All directorys and files untracked by git but not matched in `.gitignore`
+Following coding systems can be auto detected:
+```
+* (BOM detect)
+* (ascii)
+* multibyte coding systems:
+ - gb18030 (gb2312)
+ - big5
+ - sjis
+ - euc-jp
+ - euc-kr
+ - euc-tw
+ - utf-8
+ - utf-16le (also without signature)
+ - utf-16be (also without signature)
+* singlebyte coding systems:
+ - greek
+  > iso-8859-7
+  > windows-1253
+ - russian
+  > koi8-r
+  > windows-1251
+  > iso-8859-5
+  > ibm855
+ - bulgarian
+  > iso-8859-5
+  > windows-1251
+ - sjis (singlebyte only)
+* latin-1
+* latin-2
+```
 
 ## Install
 
 ### with melpa
 ```
-M-x package-install RET speedbar-git-respect RET
+M-x package-install RET unicad RET
 ```
-
-### build and install package local
-`make` and extract package to directory `elpa` in emacs home directory
 
 ## Usage
 ``` elisp
-(speedbar-git-respect-mode t)
+(unicad-mode)
+(unicad-mode 0)
 ```
 
-## Screenshot
-![](https://pbs.twimg.com/media/EJNJInXVAAAjYQ5?format=png&name=small)
+M-x `unicad-mode`
 
 ## LICENSE
 GPLv3
 
-## About Unicode
-The unicode filename or directory name won't display correct, unless disable the git's octal utf8 display.
-
-To disable it, run `git config --global core.quotepath off`
+## Credits
+`unicad` is written by [**Qichen Huang**](unicad.el@gmail.com). And [室见](https://github.com/ukari) is the MELPA maintainer of `unicad` .

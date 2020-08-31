@@ -4,6 +4,7 @@
 ;; Copyright (C) 2006, 2007, 2008, 2010 Qichen Huang
 ;; $Id$
 ;; Author: Qichen Huang <unicad.el@gmail.com>
+;; Melpa maintainer: chendianbuji <chendianbuji@gmail.com>
 ;; Package-Requires: ((emacs "24"))
 ;; Time-stamp: <2010-04-21 15:07:12>
 ;; Version: 1.1.7
@@ -19,7 +20,7 @@
 ;;;{{{  Commentary
 ;;; Commentary:
 ;; unicad.el is an Elisp program port from Mozilla universal charset
-;; auto detector.  After loading unicad in GNU Emacs, it can automatically
+;; auto detector. After loading unicad in GNU Emacs, it can automatically
 ;; detect multiple charsets, and you will never encounter garbled files
 ;; in the future.
 
@@ -50,13 +51,13 @@
 ;;      > iso-8859-7
 ;;      > windows-1253
 ;;    - russian
-;;      >koi8-r
-;;      >windows-1251
-;;      >iso-8859-5
-;;      >ibm855
+;;      > koi8-r
+;;      > windows-1251
+;;      > iso-8859-5
+;;      > ibm855
 ;;  - bulgarian
-;;      >iso-8859-5
-;;      >windows-1251
+;;      > iso-8859-5
+;;      > windows-1251
 ;;  - sjis (singlebyte only)
 ;;  * latin-1
 ;;  * latin-2
