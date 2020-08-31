@@ -1,32 +1,26 @@
-;;; unicad.el --- an elisp port of Mozilla Universal Charset Auto Detector
+;;; unicad.el --- An elisp port of Mozilla Universal Charset Auto Detector
 
 ;;;{{{  Copyright and License
 ;; Copyright (C) 2006, 2007, 2008, 2010 Qichen Huang
 ;; $Id$
 ;; Author: Qichen Huang <unicad.el@gmail.com>
 ;; Time-stamp: <2010-04-21 15:07:12>
-;; Version: v1.1.6-beta
-;; Keywords: coding-system, auto-coding-functions
-;; URL: http://code.google.com/p/unicad/
+;; Version: 1.1.7
+;; Keywords: i18n
+;; URL: https://github.com/ukari/unicad
+;;}}}
 
-;; This program is free software; you can redistribute it and/or modify
+;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
-;;
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-;;
-;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-;;;}}}
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
 
-;;;{{{ Commentary:
-
-;;
+;;;{{{  Commentary
+;;; Commentary:
+;; unicad.el is an Elisp program port from Mozilla universal charset
+;; auto detector.  After loading unicad in GNU Emacs, it can automatically
+;; detect multiple charsets, and you will never encounter garbled files
+;; in the future.
 
 ;; Put this file into your load-path and the following into your ~/.emacs:
 ;;   (require 'unicad)
@@ -140,10 +134,22 @@
 ;;{{{  define variable
 
 ;;(provide 'unicad)
-(eval-when-compile
-  (require 'cl))
+(require 'cl)
 
-(defvar unicad-version "Unicad v1.1.6-beta")
+(defgroup unicad nil "An elisp port of Mozilla Universal Charset Auto Detector" :group 'I18n)
+
+;;;###autoload
+(define-minor-mode unicad-mode
+  "Toggle unicad mode"
+  :init-value nil
+  :global t
+  :lighter " Unicad"
+  :group 'unicad
+  (if unicad-mode
+      (unicad-disable)
+    (unicad-enable)))
+
+(defvar unicad-version "Unicad v1.1.7")
 (defvar unicad-global-enable t)
 (defvar unicad-eol nil)
 (defvar unicad-quick-size 500)
@@ -158,13 +164,13 @@
 (defvar unicad-minimum-size-threshold 10)
 
 (defvar unicad-cjk-prefer nil
-  "set preference encoding system (only for chinese, japanese, korean coding systems.)")
+  "Set preference encoding system (only for chinese, japanese, korean coding systems.).")
 
 (defconst unicad--sure-yes 0.99)
 (defconst unicad--sure-no 0.01)
 
 (defvar unicad-best-guess nil
-  "(MACHINE-BEST-GUESS BEST-CONFIDENCE)")
+  "(MACHINE-BEST-GUESS BEST-CONFIDENCE).")
 
 ;; (make-variable-buffer-local 'unicad-best-guess)
 
@@ -199,7 +205,7 @@
     [utf-8 0 unicad-utf8-prober]
     [utf-16le 0 unicad-ucs2le-prober]
     [utf-16be 0 unicad-ucs2be-prober])
-  "([CODING-SYSTEM BEST-CONFIDENCE PROBER-FUNCTION] ...)")
+  "([CODING-SYSTEM BEST-CONFIDENCE PROBER-FUNCTION] ...).")
 
 ;;}}}
 
@@ -232,6 +238,7 @@ If optional argument HERE is non-nil, insert string at point."
 ;;{{{  Auto Coding Function
 
 (defun unicad-char-after (&optional pos)
+  "Get next char by POS."
   (let (char)
     (if pos
         (setq char (char-after pos))
@@ -246,7 +253,7 @@ If optional argument HERE is non-nil, insert string at point."
 ;; ePureAscii, eEscAscii -> unicad-default-coding-system
 ;; eHighbyte -> multibyte-group-prober -> latin1->prober
 (defun unicad-universal-charset-detect (size)
-  "detect charset"
+  "Detect charset with SIZE range."
   ;;(goto-char (point-min))
   (when (and  (or (and (numberp unicad-global-enable) (> unicad-global-enable 0))
                   (eq unicad-global-enable t))
@@ -268,8 +275,7 @@ If optional argument HERE is non-nil, insert string at point."
               (code0 0)
               prober-result
               code1 code2 state
-              start quick-start quick-end
-              )
+              start quick-start quick-end)
           (setq unicad-eol nil)
           (unless (setq prober-result (unicad-bom-detect))
             (goto-char (point-min))
@@ -325,8 +331,7 @@ If optional argument HERE is non-nil, insert string at point."
                   (setq maxConfidence (unicad-latin-group-prober start end))
                   (if (> (cadr unicad-singlebyte-best-guess) (cadr unicad-best-guess))
 ;;                       (set (make-local-variable 'unicad-best-guess) unicad-singlebyte-best-guess)
-                      (setq unicad-best-guess unicad-singlebyte-best-guess)
-                    )
+                      (setq unicad-best-guess unicad-singlebyte-best-guess))
                   (if (> maxConfidence (cadr unicad-best-guess))
                       (setq prober-result (car unicad-latin-best-guess)
                             unicad-best-guess unicad-latin-best-guess)
@@ -349,9 +354,10 @@ If optional argument HERE is non-nil, insert string at point."
 
 (if (>= emacs-major-version 22)
     (add-to-list 'auto-coding-functions 'unicad-universal-charset-detect)
-  (setq set-auto-coding-function 'emacs21-check-coding-system))
+  (setq set-auto-coding-function 'unicad-emacs21-check-coding-system))
 
-(defun emacs21-check-coding-system (filename size)
+(defun unicad-emacs21-check-coding-system (filename size)
+  "Check coding system with FILENAME and within SIZE range."
   (let (coding-system)
     (setq coding-system (set-auto-coding filename size))
     (unless coding-system
@@ -364,8 +370,8 @@ If optional argument HERE is non-nil, insert string at point."
 
 ;;{{{  BOM detector
 (defun unicad-bom-detect ()
-  "BOM detector. For detecting the signature of utf-8, utf-16le,
-utf-16be ..."
+  "BOM detector.
+For detecting the signature of utf-8, utf-16le, utf-16be ..."
   (save-excursion
     (goto-char (point-min))
     (when (> (point-max) 3)
@@ -418,23 +424,23 @@ utf-16be ..."
 ;;{{{  some chardet functions
 
 (defsubst unicad-chardet-prober (chardet)
-  "fetch the multibyte chardet prober function"
+  "Fetch the multibyte CHARDET prober function."
   (aref chardet 2))
 
 (defsubst unicad-chardet-name (chardet)
-  "get the coding system name of a multibyte chardet"
+  "Get the coding system name of a multibyte CHARDET."
   (aref chardet 0))
 
-(defsubst unicad-chardet-set-confidence (chardet conf)
-  "set the confidence (probability) of a multibyte chardet"
-  (aset chardet 1 conf))
+(defsubst unicad-chardet-set-confidence (chardet confidence)
+  "Set the CONFIDENCE (probability) of a multibyte CHARDET."
+  (aset chardet 1 confidence))
 
 (defsubst unicad-chardet-confidence (chardet)
-  "get the confidence"
+  "Get the confidence of a CHARDET."
   (aref chardet 1))
 
 (defun unicad-chardet (group prober)
-  "Search for detector by CODING"
+  "Search for detector in chardet GROUP list by comparing PROBER."
   (let ((lists group)
         chardet)
     (while lists
@@ -1266,8 +1272,7 @@ utf-16be ..."
    (cons 'precedence-matrix unicad-hebrew-lang-model)
    (cons 'typ-positive-ratio 0.984004)
    (cons 'keep-english-letter nil)
-   (cons 'charset-name 'windows-1255)
-   ))
+   (cons 'charset-name 'windows-1255)))
 
 ;;;}}}
 ;;{{{  sjis single byte Model
@@ -1438,21 +1443,25 @@ utf-16be ..."
     unicad-latin5-bulgarian-prober
     unicad-win1251-bulgarian-prober
     unicad-sjis-sb-prober)
-  "a list of singlebyte prober functions")
+  "A list of singlebyte prober functions.")
 
 (defsubst unicad-sb-dist-table-reset (dist-table)
+  "Reset singlebyte DIST-TABLE."
   (fillarray dist-table 0))
 
 (defsubst unicad-sb-seq-counters++ (seq-count-table count)
+  "Increase SEQ-COUNT-TABLE by COUNT + 1."
   (aset seq-count-table count (1+ (aref seq-count-table count))))
 
 (defsubst unicad-sb-get-name (model)
+  "Get singlebyte MODEL name."
   (cdr (nth 0 model)))
 
 (defun unicad-singlebyte-group-prober (start end)
-  "extract the singlebyte chardet prober functions from
-`unicad-singlebyte-group-list', compare the confidence of each
-chardet and return the best guess."
+  "Extract the singlebyte chardet prober functions.
+Compare the confidence of each chardet and return the best guess.
+Use chars between START and END.
+See `unicad-singlebyte-group-list'."
   (let ((lists unicad-singlebyte-group-list)
         (mState 'eDetecting)
         (bestConf 0.0)
@@ -1473,8 +1482,7 @@ chardet and return the best guess."
         (if (> cf bestConf)
             (progn
               (setq mBestGuess (car (nth 0 unicad-singlebyte-group-guess)))
-              (setq bestConf cf)))))
-      )
+              (setq bestConf cf))))))
     (setq unicad-singlebyte-group-guess (reverse unicad-singlebyte-group-guess))
     (if (or (<= bestConf unicad--sure-no) (null mBestGuess))
         (setq mState 'eNotMe)
@@ -1486,7 +1494,11 @@ chardet and return the best guess."
                                        positive-ratio
                                        char2order-map
                                        lang-model)
-  "detect singlebyte charset"
+  "Detect singlebyte charset using chars between START and END.
+Argument CHARSET-NAME.
+Argument POSITIVE-RATIO.
+Argument CHAR2ORDER-MAP.
+Argument LANG-MODEL."
   (goto-char start)
   (let ((mReversed nil)
         (mState 'eDetecting)
@@ -1504,8 +1516,7 @@ chardet and return the best guess."
     (save-excursion
       (while (and (< (point) end)
                   (eq mState 'eDetecting)
-                  (< words unicad-quick-singlebyte-words)
-                  )
+                  (< words unicad-quick-singlebyte-words))
         (setq code1 (unicad-char-after))
         (forward-char)
         (if (and (= code0 #x0D) (= code1 #x0A))
@@ -1514,8 +1525,7 @@ chardet and return the best guess."
           (setq meetMSB t)
           (goto-char word-mark)
           (setq code1 (unicad-char-after))
-          (forward-char)
-          )
+          (forward-char))
         (if (and
              (< code1 #x80)
              (not (or (and (> code1 ?a) (< code1 ?z))
@@ -1537,8 +1547,7 @@ chardet and return the best guess."
                    (aref lang-model (+ order1 (* order0 unicad-sample-size))))
                 (unicad-sb-seq-counters++
                  seq-counters
-                 (aref lang-model (+ order0 (* order1 unicad-sample-size)))))
-              ))
+                 (aref lang-model (+ order0 (* order1 unicad-sample-size)))))))
           (if (> order1 255)
               (setq mState 'eNotMe))
           (setq order0 order1))
@@ -1558,7 +1567,12 @@ chardet and return the best guess."
     mState))
 
 (defun unicad-singlebyte-get-confidence (positive-ratio total-char freq-char total-seqs seq-counters)
-  "calculate the confidence for a singlebyte chardet"
+  "Calculate the confidence for a singlebyte chardet.
+Argument POSITIVE-RATIO.
+Argument TOTAL-CHAR.
+Argument FREQ-CHAR.
+Argument TOTAL-SEQS.
+Argument SEQ-COUNTERS."
   ;;positive approach
   (let ((confidence 0.01)
         r)
@@ -1571,11 +1585,13 @@ chardet and return the best guess."
     confidence))
 
 (defconst unicad-latin7-name 'iso-8859-7
-  "The charset name for latin7-prober")
+  "The charset name for latin7-prober.")
 
 (defconst unicad-latin7-positive-ratio 0.982851)
 
 (defsubst unicad-latin7-prober (start end)
+  "Latin7 charset prober.
+Use chars between START and END."
   (unicad-singlebyte-prober start end
                             unicad-latin7-name
                             unicad-latin7-positive-ratio
@@ -1583,11 +1599,13 @@ chardet and return the best guess."
                             unicad-greek-lang-model))
 
 (defconst unicad-win1253-name 'windows-1253
-  "The charset name for win1253-prober")
+  "The charset name for win1253-prober.")
 
 (defconst unicad-win1253-positive-ratio 0.982851)
 
 (defsubst unicad-win1253-prober (start end)
+  "Win1253 charset prober.
+Use chars between START and END."
   (unicad-singlebyte-prober start end
                             unicad-win1253-name
                             unicad-win1253-positive-ratio
@@ -1595,11 +1613,13 @@ chardet and return the best guess."
                             unicad-greek-lang-model))
 
 (defconst unicad-koi8r-name 'koi8-r
-  "The charset name for koi8r-prober")
+  "The charset name for koi8r-prober.")
 
 (defconst unicad-koi8r-positive-ratio 0.976601)
 
 (defsubst unicad-koi8r-prober (start end)
+  "Koi8r charset prober.
+Use chars between START and END."
   (unicad-singlebyte-prober start end
                             unicad-koi8r-name
                             unicad-koi8r-positive-ratio
@@ -1607,11 +1627,13 @@ chardet and return the best guess."
                             unicad-russian-lang-model))
 
 (defconst unicad-win1251-name 'windows-1251
-  "The charset name for win1251-prober")
+  "The charset name for win1251-prober.")
 
 (defconst unicad-win1251-positive-ratio 0.976601)
 
 (defsubst unicad-win1251-prober (start end)
+  "Win1251 charset prober.
+Use chars between START and END."
   (unicad-singlebyte-prober start end
                             unicad-win1251-name
                             unicad-win1251-positive-ratio
@@ -1619,11 +1641,13 @@ chardet and return the best guess."
                             unicad-russian-lang-model))
 
 (defconst unicad-latin5-name 'iso-8859-5
-  "The charset name for latin5-prober")
+  "The charset name for latin5-prober.")
 
 (defconst unicad-latin5-positive-ratio 0.976601)
 
 (defsubst unicad-latin5-prober (start end)
+  "Latin5 charset prober.
+Use chars between START and END."
   (unicad-singlebyte-prober start end
                             unicad-latin5-name
                             unicad-latin5-positive-ratio
@@ -1631,11 +1655,13 @@ chardet and return the best guess."
                             unicad-russian-lang-model))
 
 (defconst unicad-ibm855-name 'ibm855
-  "The charset name for ibm855-prober")
+  "The charset name for ibm855-prober.")
 
 (defconst unicad-ibm855-positive-ratio 0.976601)
 
 (defsubst unicad-ibm855-prober (start end)
+  "Ibm855 charset prober.
+Use chars between START and END."
   (unicad-singlebyte-prober start end
                             unicad-ibm855-name
                             unicad-ibm855-positive-ratio
@@ -1643,11 +1669,13 @@ chardet and return the best guess."
                             unicad-russian-lang-model))
 
 (defconst unicad-latin5-bulgarian-name 'iso-8859-5
-  "The charset name for latin5-bulgarian-prober")
+  "The charset name for latin5-bulgarian-prober.")
 
 (defconst unicad-latin5-bulgarian-positive-ratio 0.976601)
 
 (defsubst unicad-latin5-bulgarian-prober (start end)
+  "Latin5 bulgarian charset prober.
+Use chars between START and END."
   (unicad-singlebyte-prober start end
                             unicad-latin5-bulgarian-name
                             unicad-latin5-bulgarian-positive-ratio
@@ -1655,11 +1683,13 @@ chardet and return the best guess."
                             unicad-russian-lang-model))
 
 (defconst unicad-win1251-bulgarian-name 'windows-1251
-  "The charset name for win1251-bulgarian-prober")
+  "The charset name for win1251-bulgarian-prober.")
 
 (defconst unicad-win1251-bulgarian-positive-ratio 0.969392)
 
 (defsubst unicad-win1251-bulgarian-prober (start end)
+  "Win1251 charset prober.
+Use chars between START and END."
   (unicad-singlebyte-prober start end
                             unicad-win1251-bulgarian-name
                             unicad-win1251-bulgarian-positive-ratio
@@ -1667,11 +1697,13 @@ chardet and return the best guess."
                             unicad-russian-lang-model))
 
 (defconst unicad-sjis-sb-name 'sjis
-  "The charset name for sjis-sb-prober")
+  "The charset name for sjis-sb-prober.")
 
 (defconst unicad-sjis-sb-positive-ratio 0.95)
 
 (defsubst unicad-sjis-sb-prober (start end)
+  "Shift_JIS charset prober.
+Use chars between START and END."
   (unicad-singlebyte-prober start end
                             unicad-sjis-sb-name
                             unicad-sjis-sb-positive-ratio
@@ -3102,6 +3134,7 @@ chardet and return the best guess."
 
 ;;{{{  Dist Table functions
 (defsubst unicad-dist-table-reset (dist-table)
+  "Reset DIST-TABLE."
   (setcar dist-table 0)
   (setcdr dist-table 0))
 
@@ -3109,11 +3142,17 @@ chardet and return the best guess."
 (defalias 'unicad-dist-table-freq-chars 'cdr)
 
 (defsubst unicad-dist-table-total-chars++ (dist-table)
+  "Increase total chars of DIST-TABLE by 1."
   (setcar dist-table (1+ (car dist-table))))
 (defsubst unicad-dist-table-freq-chars++ (dist-table)
+  "Increase freq chars of DIST-TABLE by 1."
   (setcdr dist-table (1+ (cdr dist-table))))
 
 (defun unicad-dist-table-get-confidence (dist-table dist-ratio size &optional prefer)
+  "Get DIST-TABLE confidence.
+Argument DIST-RATIO.
+Argument SIZE.
+Argument PREFER is match preference encoding system."
   (let ((Confidence 0.0)
         (total-chars (unicad-dist-table-total-chars dist-table))
         (freq-chars (unicad-dist-table-freq-chars dist-table)))
@@ -3133,32 +3172,33 @@ chardet and return the best guess."
 
 ;;{{{  State Machine functions
 (defvar unicad-sm-coding-state nil
-  "Init state:
-   ((mState . eStart)
-    (mCharLen . 0)
-    (mBytePos . 0))")
+  "Init state: ((mState . eStart) (mCharLen . 0) (mBytePos . 0)).")
 
 (defconst unicad--eStart 0)
 (defconst unicad--eError 1)
 (defconst unicad--eItsMe 2)
 
 (defsubst unicad-sm-reset ()
+  "Reset state machine."
   (setq unicad-sm-coding-state `((mState . ,unicad--eStart)
                                (mCharLen . 0)
                                (mBytePos . 0))))
 
 (defsubst unicad-sm-set (name value)
+  "Set NAME and VALUE for state machine."
   (setcdr (assoc name unicad-sm-coding-state) value))
 
 (defsubst unicad-sm-get (name)
-  "To get mState mCharlen or mByte"
+  "To get mState mCharlen or mByte by NAME."
   (cdr (assoc name unicad-sm-coding-state)))
 
 (defun unicad-next-state (ch model)
-  "Verificate multibyte codings by class-table and state-table"
+  "Verificate multibyte codings by class-table and state-table.
+Argument MODEL.
+Argument CH char in class table."
   (let ((current-state (unicad-sm-get 'mState))
         (current-bytepos (unicad-sm-get 'mBytePos))
-        (byteCls (aref (cdr (assoc 'classTable model))  ch))
+        (byteCls (aref (cdr (assoc 'classTable model)) ch))
         (next-charlen (unicad-sm-get 'mCharLen))
         next-state next-bytepos)
     (when (= current-state unicad--eStart)
@@ -3643,9 +3683,10 @@ chardet and return the best guess."
 ;;{{{  Multibyte Prober
 
 (defun unicad-multibyte-group-prober (start end)
-  "extract the multibyte chardet prober functions from
-`unicad-multibyte-group-list', compare the confidence of each
-chardet and return the best guess."
+  "Extract the multibyte chardet prober functions.
+Compare the confidence of each chardet and return the best guess.
+Use chars between START and END.
+See `unicad-multibyte-group-list'."
   (let ((lists unicad-multibyte-group-list)
         (mState 'eDetecting)
         (bestConf 0.0)
@@ -3673,8 +3714,13 @@ chardet and return the best guess."
     mState))
 
 (defun unicad-cjk-prober (start end chardet model dist-table dist-ratio analyser)
-  "A generic prober for two byte coding system. e.g. chinese,
-japanese, korean"
+  "A generic prober for two byte coding system, e.g. chinese, japanese, korean.
+Use chars between START and END.
+Argument CHARDET charset detector.
+Argument MODEL.
+Argument DIST-TABLE.
+Argument DIST-RATIO.
+Argument ANALYSER."
   (let ((mState 'eDetecting)
         (mConfidence 0.0)
         (code0 0) (code1 0)
@@ -3729,8 +3775,9 @@ japanese, korean"
 (defvar unicad-utf8-list (unicad-chardet unicad-multibyte-group-list 'unicad-utf8-prober))
 
 (defun unicad-utf8-prober (start end)
-  "Detect for utf-8 coding-system by state
-machine (`unicad-next-state') and get the confidence"
+  "Detect for utf-8 coding-system by state machine and get the confidence.
+Use chars between START and END.
+See state machine (`unicad-next-state')"
   (let ((mState 'eDetecting)
         (mNumOfMBChar 0)
         codingState charlen (mConfidence 0.0))
@@ -3763,7 +3810,8 @@ machine (`unicad-next-state') and get the confidence"
       mState)))
 
 (defun unicad-utf8-get-confidence (mNumOfMBChar)
-  "calculate the confidence for utf-8"
+  "Calculate the confidence for utf-8.
+Argument MNUMOFMBCHAR."
   (let ((unlike unicad--sure-yes)
         (one-char-prob 0.5))
     (if (< mNumOfMBChar 6)
@@ -3777,8 +3825,9 @@ machine (`unicad-next-state') and get the confidence"
 (defvar unicad-ucs2be-list (unicad-chardet unicad-multibyte-group-list 'unicad-ucs2be-prober))
 
 (defun unicad-ucs2be-prober (start end)
-  "A simple prober function for utf-16-be. It only counts the
-eol, space, numbers and english letters."
+  "A simple prober function for utf-16-be.
+It only counts the eol, space, numbers and english letters.
+Use chars between START and END."
   (let ((mState 'eNotMe)
         (count 0)
         code0 code1)
@@ -3812,8 +3861,9 @@ eol, space, numbers and english letters."
 (defvar unicad-ucs2le-list (unicad-chardet unicad-multibyte-group-list 'unicad-ucs2le-prober))
 
 (defun unicad-ucs2le-prober (start end)
-  "A simple prober function for utf-16-le. It only counts the
-eol, space, numbers and english letters."
+  "A simple prober function for utf-16-le.
+It only counts the eol, space, numbers and english letters.
+Use chars between START and END."
   (let ((mState 'eNotMe)
         (count 0)
         code0 code1)
@@ -3980,15 +4030,19 @@ eol, space, numbers and english letters."
 (defvar unicad-gb2312-dist-table '(0 . 0))
 
 (defsubst unicad-gb2312-prober (start end)
+  "GB2312 charset prober.
+Use chars between START and END."
   (unicad-cjk-prober start end unicad-gb2312-list
                    unicad-gb18030-sm-model unicad-gb2312-dist-table
                    unicad-gb2312-dist-ratio 'unicad-gb2312-analyser))
 
 (defun unicad-gb2312-analyser (ch0 ch1)
-  "for GB2312 encoding, we are interested
-first  byte range: 0xb0 -- 0xfe
-second byte range: 0xa1 -- 0xfe
-no validation needed here.  State machine has done that"
+  "For GB2312 encoding, we are interested:
+First  byte range: 0xb0 -- 0xfe
+Second byte range: 0xa1 -- 0xfe
+no validation needed here.  State machine has done that.
+CH0 first byte for encoding in GB2312.
+CH1 second byte for encoding in GB2312."
   (when (and (>= ch0 #xb0) (>= ch1 #xa1))
     (let (order)
       (setq order (- (+ (* 94 (- ch0 #xb0)) ch1) #xa1))
@@ -4005,13 +4059,18 @@ no validation needed here.  State machine has done that"
 (defvar unicad-gbkcht-list (unicad-chardet unicad-multibyte-group-list 'unicad-gbkcht-prober))
 (defvar unicad-big5-dist-table '(0 . 0))
 (defsubst unicad-gbkcht-prober (start end)
+  "GBK charset prober.
+Use chars between START and END."
   (unicad-cjk-prober start end unicad-gbkcht-list
                    unicad-gb18030-sm-model unicad-big5-dist-table
                    unicad-big5-dist-ratio 'unicad-gbkcht-analyser))
 
 
 (defun unicad-gbkcht-analyser (ch0 ch1)
-  "we convert the gbk code into big5, than use `unicad-big5-analyser' to get the order"
+  "We convert the GBK code into big5.
+CH0 first byte for encoding in GBK.
+CH1 second byte for encoding in GBK.
+See `unicad-big5-analyser'."
   (let ((chargbk (decode-char 'chinese-gbk (+ (* 256 ch0) ch1))))
     (when chargbk
       (let ((bar (encode-coding-char chargbk 'big5)))
@@ -4026,15 +4085,19 @@ no validation needed here.  State machine has done that"
 (defvar unicad-big5-list (unicad-chardet unicad-multibyte-group-list 'unicad-big5-prober))
 (defvar unicad-big5-dist-table '(0 . 0))
 (defsubst unicad-big5-prober (start end)
+  "Big5 charset prober.
+Use chars between START and END."
   (unicad-cjk-prober start end unicad-big5-list
                    unicad-big5-sm-model unicad-big5-dist-table
                    unicad-big5-dist-ratio 'unicad-big5-analyser))
 
 (defun unicad-big5-analyser (ch0 ch1)
-  "for big5 encoding, we are interested
-  first  byte range: 0xa4 -- 0xfe
-  second byte range: 0x40 -- 0x7e , 0xa1 -- 0xfe
-no validation needed here. State machine has done that"
+  "For big5 encoding, we are interested:
+First byte range: 0xa4 -- 0xfe
+Second byte range: 0x40 -- 0x7e , 0xa1 -- 0xfe
+No validation needed here, state machine has done that.
+CH0 first byte for encoding in big5.
+CH1 second byte for encoding in big5."
   (when (>= ch0 #xa4)
     (let ((order -1))
       (if (>= ch1 #xa1)
@@ -4052,16 +4115,20 @@ no validation needed here. State machine has done that"
 (defvar unicad-sjis-list (unicad-chardet unicad-multibyte-group-list 'unicad-sjis-prober))
 (defvar unicad-sjis-dist-table '(0 . 0))
 (defsubst unicad-sjis-prober (start end)
+  "Shift_JIS prober.
+Use chars between START and END."
   (unicad-cjk-prober start end unicad-sjis-list
                    unicad-sjis-sm-model unicad-sjis-dist-table
                    unicad-jis-dist-ratio 'unicad-sjis-analyser))
 
 (defun unicad-sjis-analyser (ch0 ch1)
-  "for sjis encoding, we are interested
-  first  byte range: 0x81 -- 0x9f , 0xe0 -- 0xfe
-  second byte range: 0x40 -- 0x7e,  0x80 -- 0xfc
-no validation needed here. State machine has done that
- !NOTE! 0xA1 -- 0xDF are valid halfwidth katakana!!!"
+  "For sjis encoding, we are interested:
+First  byte range: 0x81 -- 0x9f , 0xe0 -- 0xfe
+Second byte range: 0x40 -- 0x7e,  0x80 -- 0xfc
+No validation needed here, state machine has done that.
+!NOTE! 0xA1 -- 0xDF are valid halfwidth katakana!!!
+CH0 first byte for encoding in Shift_JIS.
+CH1 second byte for encoding in Shift_JIS."
   (let ((order -1))
     (cond
      ((and (>= ch0 #x81) (<= ch0 #x9f))
@@ -4084,15 +4151,19 @@ no validation needed here. State machine has done that
 (defvar unicad-eucjp-list (unicad-chardet unicad-multibyte-group-list 'unicad-eucjp-prober))
 (defvar unicad-eucjp-dist-table '(0 . 0))
 (defsubst unicad-eucjp-prober (start end)
+  "EUCJP prober.
+Use chars between START and END."
   (unicad-cjk-prober start end unicad-eucjp-list
                    unicad-eucjp-sm-model unicad-eucjp-dist-table
                    unicad-jis-dist-ratio 'unicad-eucjp-analyser))
 
 (defun unicad-eucjp-analyser (ch0 ch1)
-  "for EUCJP encoding, we are interested
-  first  byte range: 0xa0 -- 0xfe
-  second byte range: 0xa1 -- 0xfe
-no validation needed here. State machine has done that"
+  "For EUCJP encoding, we are interested:
+First  byte range: 0xa0 -- 0xfe
+Second byte range: 0xa1 -- 0xfe
+No validation needed here, state machine has done that.
+CH0 first byte for encoding in EUCJP.
+CH1 second byte for encoding in EUCJP."
   (when (>= ch0 #xa0)
     (let (order)
       (setq order (- (+ (* 94 (- ch0 #xa1)) ch1) #xa1))
@@ -4108,15 +4179,19 @@ no validation needed here. State machine has done that"
 (defvar unicad-euckr-list (unicad-chardet unicad-multibyte-group-list 'unicad-euckr-prober))
 (defvar unicad-euckr-dist-table '(0 . 0))
 (defsubst unicad-euckr-prober (start end)
+  "EUCKR prober.
+Use chars between START and END."
   (unicad-cjk-prober start end unicad-euckr-list
                    unicad-euckr-sm-model unicad-euckr-dist-table
                    unicad-jis-dist-ratio 'unicad-euckr-analyser))
 
 (defun unicad-euckr-analyser (ch0 ch1)
-  "for euc-KR encoding, we are interested
-  first  byte range: 0xb0 -- 0xfe
-  second byte range: 0xa1 -- 0xfe
-no validation needed here. State machine has done that"
+  "For euc-KR encoding, we are interested:
+First  byte range: 0xb0 -- 0xfe
+Second byte range: 0xa1 -- 0xfe
+No validation needed here, state machine has done that.
+CH0 first byte for encoding in euc-KR.
+CH1 second byte for encoding in euc-KR."
   (when (>= ch0 #xb0)
     (let (order)
       (setq order (- (+ (* 94 (- ch0 #xb0)) ch1) #xa1))
@@ -4132,15 +4207,19 @@ no validation needed here. State machine has done that"
 (defvar unicad-euctw-list (unicad-chardet unicad-multibyte-group-list 'unicad-euctw-prober))
 (defvar unicad-euctw-dist-table '(0 . 0))
 (defsubst unicad-euctw-prober (start end)
+  "EUCTW prober.
+Use chars between START and END."
   (unicad-cjk-prober start end unicad-euctw-list
                    unicad-euctw-sm-model unicad-euctw-dist-table
                    unicad-euctw-dist-ratio 'unicad-euctw-analyser))
 
 (defun unicad-euctw-analyser (ch0 ch1)
-  "for euc-TW encoding, we are interested
-  first  byte range: 0xc4 -- 0xfe
-  second byte range: 0xa1 -- 0xfe
-no validation needed here. State machine has done that"
+  "For euc-TW encoding, we are interested:
+First  byte range: 0xc4 -- 0xfe
+Second byte range: 0xa1 -- 0xfe
+No validation needed here, state machine has done that.
+CH0 first byte for encoding in euc-TW.
+CH1 second byte for encoding in euc-TW."
   (when (>= ch0 #xc4)
     (let (order)
       (setq order (- (+ (* 94 (- ch0 #xc4)) ch1) #xa1))
@@ -4347,7 +4426,8 @@ no validation needed here. State machine has done that"
 ;;{{{  latin prober
 
 (defun unicad-latin-group-prober (start end)
-  "for latin-1 and latin-2"
+  "For latin-1 and latin-2.
+Use chars between START and END."
   (let (latin1-conf latin2-conf)
     (save-excursion
       (setq latin1-conf
@@ -4364,6 +4444,10 @@ no validation needed here. State machine has done that"
     (cadr unicad-latin-best-guess)))
 
 (defun unicad-latin-prober (start end class-table class-num latin-model)
+  "Use chars between START and END.
+Argument CLASS-TABLE.
+Argument CLASS-NUM.
+Argument LATIN-MODEL."
   (let ((mState 'eDetecting)
         (code0-class 1)                 ; OTH
         (mFreqCounter [0 0 0 0])
@@ -4386,13 +4470,15 @@ no validation needed here. State machine has done that"
                             code1-class)))
         (if (= freq 0)
             (setq mState 'eNotMe)
-          (aset mFreqCounter freq (1+ (aref mFreqCounter freq)))
-          )
+          (aset mFreqCounter freq (1+ (aref mFreqCounter freq))))
         (setq code0-class code1-class
                 code0 code1)))
     (unicad-latin-get-confidence mState mFreqCounter)))
 
 (defun unicad-latin-get-confidence (mState mFreqCounter)
+  "Get confidence for latin.
+Argument MSTATE.
+Argument MFREQCOUNTER."
   (let ((confidence 0.0)
         (total 0))
     (if (eq mState 'eNotMe)
@@ -4686,6 +4772,8 @@ no validation needed here. State machine has done that"
 (defvar unicad-esc-group-guess nil)
 
 (defun unicad-esc-group-prober (start end)
+  "Esc charset prober.
+Use chars between START and END."
   (let ((lists unicad-esc-group-list)
         (mState 'eDetecting)
         (mBestGuess nil)
@@ -4699,11 +4787,8 @@ no validation needed here. State machine has done that"
        ((eq state 'eItsMe)
         (setq mState 'eFoundIt)
         (setq mBestGuess (car (nth 0 unicad-esc-group-guess)))
-        (setq bestConf   (cdr (nth 0 unicad-esc-group-guess)))
-        )
-       ((eq state 'eNotMe) nil)
-       ))
-    ))
+        (setq bestConf   (cdr (nth 0 unicad-esc-group-guess))))
+       ((eq state 'eNotMe) nil)))))
 
 (defvar unicad-hz-name 'hz-gb-2312)
 (defvar unicad-iso2022cn-name 'iso-2022-cn)
@@ -4711,22 +4796,34 @@ no validation needed here. State machine has done that"
 (defvar unicad-iso2022kr-name 'iso-2022-kr)
 
 (defsubst unicad-hz-prober (start end)
+  "Hz prober.
+Use chars between START and END."
   (unicad-esc-charset-prober
    start end unicad-hz-name unicad-hz-sm-model))
 
 (defsubst unicad-iso2022cn-prober (start end)
+  "Iso2022cn prober.
+Use chars between START and END."
   (unicad-esc-charset-prober
    start end unicad-iso2022cn-name unicad-iso2022cn-sm-model))
 
 (defsubst unicad-iso2022jp-prober (start end)
+  "Iso2022jp prober.
+Use chars between START and END."
   (unicad-esc-charset-prober
    start end unicad-iso2022jp-name unicad-iso2022jp-sm-model))
 
 (defsubst unicad-iso2022kr-prober (start end)
+  "Iso2022kr prober.
+Use chars between START and END."
   (unicad-esc-charset-prober
    start end unicad-iso2022kr-name unicad-iso2022kr-sm-model))
 
 (defun unicad-esc-charset-prober (start end charset-name model)
+  "Esc charset prober.
+Use chars between START and END.
+Argument CHARSET-NAME.
+Argument MODEL."
   (let ((mState 'eDetecting)
         (code0 0)
         (code1 0)
@@ -4747,8 +4844,7 @@ no validation needed here. State machine has done that"
           (push (cons charset-name unicad--sure-no) unicad-esc-group-guess))
          ((= codingState unicad--eItsMe)
           (setq mState 'eItsMe)
-          (push (cons charset-name unicad--sure-yes) unicad-esc-group-guess))))
-      )))
+          (push (cons charset-name unicad--sure-yes) unicad-esc-group-guess)))))))
 
 ;;}}}
 
