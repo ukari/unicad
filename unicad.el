@@ -135,7 +135,7 @@
 
 ;;{{{  define variable
 
-(defgroup unicad nil "An elisp port of Mozilla Universal Charset Auto Detector" :group 'I18n)
+(defgroup unicad nil "An elisp port of Mozilla Universal Charset Auto Detector" :group 'i18n)
 
 ;;;###autoload
 (define-minor-mode unicad-mode
@@ -145,11 +145,11 @@
   :lighter " Unicad"
   :group 'unicad
   (if unicad-mode
-      (unicad-disable)
-    (unicad-enable)))
+      (unicad-enable)
+    (unicad-disable)))
 
-(defvar unicad-version "Unicad v1.1.7")
-(defvar unicad-global-enable t)
+(defvar unicad-version "1.1.7")
+(defvar unicad-global-enable unicad-mode)
 (defvar unicad-eol nil)
 (defvar unicad-quick-size 500)
 (defvar unicad-quick-multibyte-words  50)
@@ -223,13 +223,15 @@ If optional argument HERE is non-nil, insert string at point."
   "Enable Unicad function."
   (interactive)
   (setq unicad-global-enable t)
-  (message "Unicad enabled."))
+  ;;(message "Unicad enabled.")
+  )
 
 (defun unicad-disable ()
   "Disable Unicad function."
   (interactive)
   (setq unicad-global-enable -1)
-  (message "Unicad DISABLED."))
+  ;;(message "Unicad DISABLED.")
+  )
 
 (defalias 'unicad 'unicad-enable)
 ;;}}}
