@@ -56,4 +56,4 @@ M-x package-install RET unicad RET
 GPLv3
 
 ## Credits
-`unicad` is written by [Qichen Huang](mailto://unicad.el@gmail.com). And [室见](https://github.com/ukari) is the MELPA maintainer of `unicad` .
+`unicad` is written by [Qichen Huang](mailto://unicad.el@gmail.com). And [室见](https://github.com/ukari) is the MELPA recipe author of `unicad` .
