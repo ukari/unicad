@@ -50,7 +50,7 @@ M-x package-install RET unicad RET
 (unicad-mode 0)
 ```
 
-M-x `unicad-mode`
+`M-x unicad-mode`
 
 ## LICENSE
 GPLv3
