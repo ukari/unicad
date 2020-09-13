@@ -95,7 +95,8 @@
 ;; small changes have been made to make the dectection more
 ;; comfortable and quickly in Emacs. For more information about
 ;; Mozilla Universal Charset Detector, please refer to:
-;; http://www.mozilla.org/projects/intl/ChardetInterface.htm
+;; 1. https://www-archive.mozilla.org/projects/intl/chardetinterface
+;; 2. https://www-archive.mozilla.org/projects/intl/universalcharsetdetection
 ;;;}}}
 
 ;;;{{{ Changelog
@@ -2774,7 +2775,7 @@ Use chars between START and END."
 ;; EUCTW frequency table
 ;; Converted from big5 work
 ;; by Taiwan's Mandarin Promotion Council
-;; <http://www.edu.tw:81/mandr/>
+;; https://www-archive.mozilla.org/projects/intl/universalcharsetdetection
 
 
 ;;******************************************************************************
