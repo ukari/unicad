@@ -27,8 +27,7 @@
 ;; Put this file into your load-path and the following into your ~/.emacs:
 ;;   (require 'unicad)
 ;;
-;; You can disable unicad by M-x `unicad-disable' and enable it by M-x
-;; `unicad-enable' or `unicad'.
+;; You can toggle unicad by M-x `unicad-mode'.
 ;;
 ;; It may take a few seconds to detect some large latin-1 or latin-2 files,
 ;; you can byte-compile this file to speed up detecting process.
@@ -75,7 +74,7 @@
 ;; Local Variables
 
 ;;; KNOWN BUGS:
-;; - Conflict with ido when exit Emacs. Add `unicad-disable' to `kill-emacs-hook' to avoid this problem.
+;; - (REMOVED) Conflict with ido when exit Emacs. Add `unicad-disable' to `kill-emacs-hook' to avoid this problem.
 ;; - Some files are too short to be detected.
 ;; - Some don't contain the most frequently characters, so that they can't be detected.
 ;; - If a japanese text file is encoded with gb18030, it's very hard to be detected.
@@ -100,6 +99,8 @@
 ;;;}}}
 
 ;;;{{{ Changelog
+;; v1.1.7 partially code refactoring, remove M-x `unicad', M-x `unicad-enable', M-x `unicad-disable',
+;;        support M-x `unicad-mode'
 ;; v1.1.6 do not invoke unicad by file saving.
 ;; v1.1.5 fixed bug in `unicad-char-after' and `unicad-universal-charset-detect' (size calc was wrong)
 ;; v1.1.4 Add function and variable `unicad-version'. small bug fix, correct unicad-eol from unicad-eof.
@@ -220,21 +221,24 @@ If optional argument HERE is non-nil, insert string at point."
         (message "%s" unicad-version)
       unicad-version)))
 
+(defun unicad-auto-chardet-wrapper (origin &rest rest)
+  "Wrapper for auto charset detecting.
+ORIGIN is function `find-file-noselect'.
+REST is the arguements for function `find-file-noselect'."
+  (if (>= emacs-major-version 22)
+      (let ((auto-coding-functions (cons 'unicad-universal-charset-detect auto-coding-functions)))
+        (apply origin rest))
+    (let ((set-auto-coding-function 'unicad-emacs21-check-coding-system))
+      (apply origin rest))))
+
 (defun unicad-enable ()
   "Enable Unicad function."
-  (interactive)
-  (setq unicad-global-enable t)
-  ;;(message "Unicad enabled.")
-  )
+  (advice-add #'find-file-noselect :around #'unicad-auto-chardet-wrapper))
 
 (defun unicad-disable ()
   "Disable Unicad function."
-  (interactive)
-  (setq unicad-global-enable -1)
-  ;;(message "Unicad DISABLED.")
-  )
+  (advice-remove #'find-file-noselect #'unicad-auto-chardet-wrapper))
 
-(defalias 'unicad 'unicad-enable)
 ;;}}}
 
 ;;{{{  Auto Coding Function
@@ -257,10 +261,8 @@ If optional argument HERE is non-nil, insert string at point."
 (defun unicad-universal-charset-detect (size)
   "Detect charset with SIZE range."
   ;;(goto-char (point-min))
-  (when (and  (or (and (numberp unicad-global-enable) (> unicad-global-enable 0))
-                  (eq unicad-global-enable t))
-              (not (local-variable-p 'buffer-file-coding-system))
-              (not (buffer-modified-p)))
+  (when (and (not (local-variable-p 'buffer-file-coding-system))
+             (not (buffer-modified-p)))
     (let ((_buf (current-buffer)))
 ;;       (make-local-variable 'unicad-best-guess)
 ;;       (make-local-variable 'unicad-singlebyte-best-guess)
@@ -354,10 +356,6 @@ If optional argument HERE is non-nil, insert string at point."
 ;;             (message "unicad unix/mac."))
           (or prober-result unicad-default-coding-system))))))
 
-(if (>= emacs-major-version 22)
-    (add-to-list 'auto-coding-functions 'unicad-universal-charset-detect)
-  (setq set-auto-coding-function 'unicad-emacs21-check-coding-system))
-
 (defun unicad-emacs21-check-coding-system (filename size)
   "Check coding system with FILENAME and within SIZE range."
   (let (coding-system)
@@ -365,8 +363,6 @@ If optional argument HERE is non-nil, insert string at point."
     (unless coding-system
       (setq coding-system (unicad-universal-charset-detect size)))
     coding-system))
-
-(add-hook 'kill-emacs-hook 'unicad-disable)
 
 ;;}}}
 
