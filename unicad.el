@@ -5,7 +5,7 @@
 ;; $Id$
 ;; Author: Qichen Huang <unicad.el@gmail.com>
 ;; MELPA recipe author: chendianbuji <chendianbuji@gmail.com>
-;; Package-Requires: ((emacs "24"))
+;; Package-Requires: ((emacs "24") (nadvice "0.3"))
 ;; Time-stamp: <2010-04-21 15:07:12>
 ;; Version: 1.1.7
 ;; Keywords: i18n
@@ -134,6 +134,8 @@
 ;;}}}
 
 ;;; Code:
+
+(require 'nadvice)
 
 ;;{{{  define variable
 
