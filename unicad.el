@@ -4851,8 +4851,7 @@ Argument MODEL."
 ;;}}}
 
 (provide 'unicad)
-
+;; Local Variables:
+;; coding: utf-8
+;; End:
 ;;; unicad.el ends here
-;;; Local Variables:
-;;; coding: utf-8-unix
-;;; End:
